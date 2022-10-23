@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+
+  postgres:
+    image: postgres:14.2
+    ports:
+      - "5434:5434"
+    volumes:
+      - data:/var/lib/postgres/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: fade123321
+  rabbitmq:
+    image: rabbitmq:3.10-rc-management-alpine
+    ports:
+      # AMQP protocol port
+      - "5672:5672"
+      # HTTP management UI
+      - "15672:15672"
+
+  auth:
+    build:
+      context: ./auth
+      args:
+        - NODE_ENV=development
+      target: dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./auth:/app/
+    environment:
+      - SERVICE=auth
+    env_file:
+      - ./auth/.env
+    depends_on:
+      - postgres
+      - rabbitmq
+
+  products:
+    build:
+      context: ./products
+      args:
+        - NODE_ENV=development
+      target: dev
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./products:/app/
+    environment:
+      - SERVICE=products
+    env_file:
+      - ./products/.env
+    depends_on:
+      - postgres
+      - rabbitmq
+
+  orders:
+    build:
+      context: ./orders
+      args:
+        - NODE_ENV=development
+      target: dev
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./orders:/app/
+    environment:
+      - SERVICE=orders
+    env_file:
+      - ./orders/.env
+    depends_on:
+      - postgres
+      - rabbitmq
+
+volumes:
+  data:
